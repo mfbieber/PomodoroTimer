@@ -1,0 +1,19 @@
+{
+  "fitbit": {
+    "appUUID": "8ce9c902-2158-454f-97ba-7e85a05d193b",
+    "appType": "app",
+    "appDisplayName": "Pomodoro Timer",
+    "iconFile": "resources/icon.png",
+    "wipeColor": "#607d8b",
+    "requestedPermissions": [],
+    "buildTargets": [
+      "higgs",
+      "meson"
+    ],
+    "i18n": {
+      "en": {
+        "name": "Pomodoro Timer"
+      }
+    }
+  }
+}
