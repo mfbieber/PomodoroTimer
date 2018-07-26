@@ -16,33 +16,50 @@ const restBackground = document.getElementById("restBackground");
 
 let workingTime;
 let restingTime;
-let remainingWorkTime = workingTime;
-let remainingRestTime = restingTime;
-let i=0;
 let working = false;
+let resting = false;
+let workCount = 0;
+let restCount = 0;
 
 workOrRest.text = 'press start!';
 clock.granularity = "seconds";
 clock.ontick = evt => {
     if (working) {
-        if (i <= workingTime) {
-            workArc.sweepAngle = i * (workBackground.sweepAngle - 2) / workingTime;
-            timeLeft.text = (workingTime - i).toString() + ' s';
-        }
-    } else {
-        if (i > workingTime && i <= (workingTime + restingTime)) {
+        workOrRest.text = 'work!';
+        if (workCount > workingTime) {
+            resting = true;
+            workCount = 0;
             working = false;
-            restArc.sweepAngle = (restBackground.sweepAngle - 2) - (restBackground.sweepAngle - 2) * (i - workingTime)/restingTime;
-            restArc.startAngle = 3 +  (restBackground.sweepAngle - 2) * (i - workingTime)/restingTime;
-            timeLeft.text = (restingTime + workingTime - i).toString() + ' s';
+        }
+        if (workCount <= workingTime) {
+            workArc.sweepAngle = workCount * (workBackground.sweepAngle - 2) / workingTime;
+            timeLeft.text = (workingTime - workCount).toString() + ' s';
+            workCount++;
         }
     }
-    i++;
+    if (resting) {
+        workOrRest.text = 'rest!';
+        if (restCount > restingTime) {
+            restCount = 0;
+            resting = false;
+            restArc.sweepAngle = restBackground.sweepAngle -2;
+            restArc.startAngle = 3;
+            workOrRest.text = 'press start!';
+        }
+        if (restCount <= restingTime) {
+            restArc.sweepAngle = (restBackground.sweepAngle - 2) * (1 - restCount/restingTime);
+            restArc.startAngle = 3 +  (restBackground.sweepAngle - 2) * restCount/restingTime;
+            timeLeft.text = (restingTime - restCount).toString() + ' s';
+            restCount++;
+        }
+    }
 };
 buttonReset.onactivate = evt => {
     working = false;
+    workCount = 0;
+    resting = false;
+    restCount = 0;
     workOrRest.text = 'press start!';
-    i = 0;
     restArc.sweepAngle = restBackground.sweepAngle -2;
     restArc.startAngle = 3;
     workArc.sweepAngle = 0;
@@ -51,25 +68,30 @@ buttonForward.onactivate = evt => {
     if (working) {
         working = false;
         workOrRest.text = 'rest!';
-        i = workingTime;
+        restArc.sweepAngle = restBackground.sweepAngle -2;
+        restArc.startAngle = 3;
+        resting = true;
     } else {
         working = true;
+        workCount = 0;
+        workArc.sweepAngle = 0;
         workOrRest.text = 'work!';
-        i = 0;
+        restArc.sweepAngle = restBackground.sweepAngle -2;
+        restArc.startAngle = 3;
+        resting = false;
     }
 };
 buttonPlay.onactivate = evt => {
     if (!working) {
         working = true;
         workOrRest.text = 'work!';
-        i = 0;
     }
 };
 buttonPause.onactivate = evt => {
     if(working) {
         working = false;
         workOrRest.text = 'rest!';
-        i = workingTime;
+        resting = true;
     }
 };
 
