@@ -25,37 +25,61 @@ workOrRest.text = 'press start!';
 clock.granularity = "seconds";
 clock.ontick = evt => {
     if (working) {
-        workArc.sweepAngle = 0;
+        if (i <= workingTime) {
+            workArc.sweepAngle = i * (workBackground.sweepAngle - 2) / workingTime;
+            timeLeft.text = (workingTime - i).toString() + ' s';
+        }
+    } else {
+        if (i > workingTime && i <= (workingTime + restingTime)) {
+            working = false;
+            restArc.sweepAngle = (restBackground.sweepAngle - 2) - (restBackground.sweepAngle - 2) * (i - workingTime)/restingTime;
+            restArc.startAngle = 3 +  (restBackground.sweepAngle - 2) * (i - workingTime)/restingTime;
+            timeLeft.text = (restingTime + workingTime - i).toString() + ' s';
+        }
     }
-    timeLeft.text = (268-i).toString() + ' s';
-    workArc.sweepAngle=i;
     i++;
 };
 buttonReset.onactivate = evt => {
     working = false;
     workOrRest.text = 'press start!';
+    i = 0;
+    restArc.sweepAngle = restBackground.sweepAngle -2;
+    restArc.startAngle = 3;
+    workArc.sweepAngle = 0;
 };
 buttonForward.onactivate = evt => {
     if (working) {
         working = false;
         workOrRest.text = 'rest!';
+        i = workingTime;
     } else {
         working = true;
         workOrRest.text = 'work!';
+        i = 0;
     }
 };
 buttonPlay.onactivate = evt => {
     if (!working) {
         working = true;
         workOrRest.text = 'work!';
+        i = 0;
     }
 };
 buttonPause.onactivate = evt => {
     if(working) {
         working = false;
         workOrRest.text = 'rest!';
+        i = workingTime;
     }
 };
+
+let updateArcs = () => {
+    workBackground.sweepAngle = (workingTime / (workingTime + restingTime)) * 360 - 2;
+    restBackground.sweepAngle = (restingTime / (workingTime + restingTime)) * 360 - 2;
+    workBackground.startAngle = restBackground.sweepAngle + 4;
+    workArc.startAngle = workBackground.startAngle + 1;
+    restArc.sweepAngle = restBackground.sweepAngle -2;
+}
 
 // Message is received
 messaging.peerSocket.onmessage = evt => {
@@ -65,15 +89,11 @@ messaging.peerSocket.onmessage = evt => {
     }
     if (evt.data.key === "sliderWorking" && evt.data.newValue) {
         workingTime = JSON.parse(evt.data.newValue);
-        workBackground.sweepAngle = (workingTime / (workingTime + restingTime)) * 360 - 2;
-        restBackground.sweepAngle = (restingTime / (workingTime + restingTime)) * 360 - 2;
-        workBackground.startAngle = restBackground.sweepAngle + 4;
+        updateArcs();
     }
     if (evt.data.key === "sliderResting" && evt.data.newValue) {
         restingTime = JSON.parse(evt.data.newValue);
-        workBackground.sweepAngle = (workingTime / (workingTime + restingTime)) * 360 - 2;
-        restBackground.sweepAngle = (restingTime / (workingTime + restingTime)) * 360 - 2;
-        workBackground.startAngle = restBackground.sweepAngle + 4;
+        updateArcs();
     }
     if (evt.data.key === "workArcColor" && evt.data.newValue) {
         let workArcColor = JSON.parse(evt.data.newValue);
