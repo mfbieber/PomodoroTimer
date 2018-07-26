@@ -1,6 +1,7 @@
 import document from "document";
 import * as messaging from "messaging";
 import clock from "clock";
+import { vibration } from "haptics";
 
 let background = document.getElementById("background");
 const workOrRest = document.getElementById("workOrRest");
@@ -27,73 +28,80 @@ clock.ontick = evt => {
     if (working) {
         workOrRest.text = 'work!';
         if (workCount > workingTime) {
+            vibration.start("bump");
             resting = true;
             workCount = 0;
             working = false;
         }
         if (workCount <= workingTime) {
             workArc.sweepAngle = workCount * (workBackground.sweepAngle - 2) / workingTime;
-            timeLeft.text = (workingTime - workCount).toString() + ' s';
+            timeLeft.text = convertSecondsToMinutesAndSeconds(workingTime - workCount);
             workCount++;
         }
     }
     if (resting) {
         workOrRest.text = 'rest!';
         if (restCount > restingTime) {
-            restCount = 0;
-            resting = false;
-            restArc.sweepAngle = restBackground.sweepAngle -2;
-            restArc.startAngle = 3;
+            vibration.start("bump");
+            resetRestSettings();
+            resetWorkSettings();
             workOrRest.text = 'press start!';
         }
         if (restCount <= restingTime) {
             restArc.sweepAngle = (restBackground.sweepAngle - 2) * (1 - restCount/restingTime);
             restArc.startAngle = 3 +  (restBackground.sweepAngle - 2) * restCount/restingTime;
-            timeLeft.text = (restingTime - restCount).toString() + ' s';
+            timeLeft.text = convertSecondsToMinutesAndSeconds(restingTime - restCount);
             restCount++;
         }
     }
 };
 buttonReset.onactivate = evt => {
-    working = false;
-    workCount = 0;
-    resting = false;
-    restCount = 0;
+    resetRestSettings();
+    resetWorkSettings();
     workOrRest.text = 'press start!';
-    restArc.sweepAngle = restBackground.sweepAngle -2;
-    restArc.startAngle = 3;
-    workArc.sweepAngle = 0;
+    timeLeft.text = '';
 };
 buttonForward.onactivate = evt => {
     if (working) {
-        working = false;
-        workOrRest.text = 'rest!';
-        restArc.sweepAngle = restBackground.sweepAngle -2;
-        restArc.startAngle = 3;
+        resetRestSettings();
+        resetWorkSettings();
         resting = true;
+        workOrRest.text = 'rest!';
     } else {
+        resetRestSettings();
+        resetWorkSettings();
         working = true;
-        workCount = 0;
-        workArc.sweepAngle = 0;
         workOrRest.text = 'work!';
-        restArc.sweepAngle = restBackground.sweepAngle -2;
-        restArc.startAngle = 3;
-        resting = false;
     }
 };
 buttonPlay.onactivate = evt => {
     if (!working) {
         working = true;
         workOrRest.text = 'work!';
+        resetRestSettings();
     }
 };
 buttonPause.onactivate = evt => {
     if(working) {
         working = false;
-        workOrRest.text = 'rest!';
         resting = true;
+        workOrRest.text = 'rest!';
+        resetWorkSettings();
     }
 };
+
+let resetWorkSettings = () => {
+    workCount = 0;
+    working = false;
+    workArc.sweepAngle = 0;
+}
+
+let resetRestSettings = () => {
+    restCount = 0;
+    resting = false;
+    restArc.sweepAngle = restBackground.sweepAngle -2;
+    restArc.startAngle = 3;
+}
 
 let updateArcs = () => {
     workBackground.sweepAngle = (workingTime / (workingTime + restingTime)) * 360 - 2;
@@ -103,6 +111,12 @@ let updateArcs = () => {
     restArc.sweepAngle = restBackground.sweepAngle -2;
 }
 
+let convertSecondsToMinutesAndSeconds = (time) => {
+    let minutes = Math.floor(time/60);
+    var seconds = time - minutes*60;
+    return (minutes < 10 ? "0" : "") + minutes.toString() + ':' + (seconds < 10 ? "0" : "") + seconds.toString();
+}
+
 // Message is received
 messaging.peerSocket.onmessage = evt => {
     console.log(`App received: ${JSON.stringify(evt)}`);
@@ -110,11 +124,11 @@ messaging.peerSocket.onmessage = evt => {
         background.style.fill = JSON.parse(evt.data.newValue);
     }
     if (evt.data.key === "sliderWorking" && evt.data.newValue) {
-        workingTime = JSON.parse(evt.data.newValue);
+        workingTime = JSON.parse(evt.data.newValue) * 60;
         updateArcs();
     }
     if (evt.data.key === "sliderResting" && evt.data.newValue) {
-        restingTime = JSON.parse(evt.data.newValue);
+        restingTime = JSON.parse(evt.data.newValue) * 60;
         updateArcs();
     }
     if (evt.data.key === "workArcColor" && evt.data.newValue) {
@@ -134,14 +148,4 @@ messaging.peerSocket.onmessage = evt => {
         buttonReset.style.fill = textColor;
         buttonForward.style.fill = textColor;
     }
-};
-
-// Message socket opens
-messaging.peerSocket.onopen = () => {
-    console.log("App Socket Open");
-};
-
-// Message socket closes
-messaging.peerSocket.onclose = () => {
-    console.log("App Socket Closed");
 };

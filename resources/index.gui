@@ -4,7 +4,7 @@
   <arc x="50%-100" y ="50%-100" id="workBackground" width="200" height="200" fill="black" arc-width="20" start-angle="92" sweep-angle="268" />
   <arc x="50%-98" y ="50%-98" id="rest" width="196" height="196" fill="black" arc-width="16" start-angle="3" sweep-angle="86" />
   <arc x="50%-98" y ="50%-98" id="work" width="196" height="196" fill="blue" arc-width="16" start-angle="93" sweep-angle="0" />
-  <text x="50%" y="50%-15" id="workOrRest" text-anchor="middle" font-size="30" />
+  <text x="50%" y="50%-15" id="workOrRest" text-anchor="middle" font-size="24" />
   <text x="50%" y="50%+35" id="timeLeft" text-anchor="middle" font-size="30" />
   <!-- TOP LEFT -->
     <use id="btn-tl" href="#combo-button-upper-left" fill="fb-cyan">
