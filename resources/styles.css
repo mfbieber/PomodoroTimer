@@ -1,3 +1,12 @@
+text {
+  font-family: Fabrikat-Black;
+  font-size: 14;
+  fill: #000000;
+  text-length: 30;
+  y: 15%;
+  x: 5%;
+}
+
 .defaultText {
   font-size: 32;
   font-family: System-Regular;
