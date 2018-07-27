@@ -83,11 +83,10 @@ let updateStyle = () => {
 clock.granularity = "minutes";
 clock.ontick = evt => {
     workOrRest.text = 'press start!';
-    start();
     loadSettings();
 };
 let start = () => {
-    setInterval(timer(), 1000);
+    setInterval(timer, 1000);
 };
 let timer = () => {
     if (working) {
@@ -125,6 +124,7 @@ buttonReset.onactivate = evt => {
     resetWorkSettings();
     workOrRest.text = 'press start!';
     timeLeft.text = '';
+    start();
 };
 buttonForward.onactivate = evt => {
     if (working) {
@@ -138,6 +138,7 @@ buttonForward.onactivate = evt => {
         working = true;
         workOrRest.text = 'work!';
     }
+    start();
 };
 buttonPlay.onactivate = evt => {
     if (!working) {
@@ -145,6 +146,7 @@ buttonPlay.onactivate = evt => {
         workOrRest.text = 'work!';
         resetRestSettings();
     }
+    start();
 };
 buttonPause.onactivate = evt => {
     if(working) {
@@ -153,6 +155,7 @@ buttonPause.onactivate = evt => {
         workOrRest.text = 'rest!';
         resetWorkSettings();
     }
+    start();
 };
 
 let resetWorkSettings = () => {
