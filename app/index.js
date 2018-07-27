@@ -15,16 +15,22 @@ const buttonForward = document.getElementById("btn-tl");
 const workBackground = document.getElementById("workBackground");
 const restBackground = document.getElementById("restBackground");
 
-let workingTime;
-let restingTime;
+let workingTime = 25;
+let restingTime = 5;
 let working = false;
 let resting = false;
 let workCount = 0;
 let restCount = 0;
+let textColor = "#87c5b4";
+let restArcColor = "#dc8331";
+let workArcColor = "#ae2c51";
+let backgroundColor = "#42113b";
 
-workOrRest.text = 'press start!';
 clock.granularity = "seconds";
-clock.ontick = evt => {
+clock.ontick = evt => {start()};
+workOrRest.text = 'press start!';
+let start = () => {setInterval(timer(), 1000);};
+let timer = () => {
     if (working) {
         workOrRest.text = 'work!';
         if (workCount > workingTime) {
@@ -121,7 +127,8 @@ let convertSecondsToMinutesAndSeconds = (time) => {
 messaging.peerSocket.onmessage = evt => {
     console.log(`App received: ${JSON.stringify(evt)}`);
     if (evt.data.key === "backgroundColor" && evt.data.newValue) {
-        background.style.fill = JSON.parse(evt.data.newValue);
+        backgroundColor = JSON.parse(evt.data.newValue);
+        background.style.fill = backgroundColor;
     }
     if (evt.data.key === "sliderWorking" && evt.data.newValue) {
         workingTime = JSON.parse(evt.data.newValue) * 60;
@@ -132,17 +139,17 @@ messaging.peerSocket.onmessage = evt => {
         updateArcs();
     }
     if (evt.data.key === "workArcColor" && evt.data.newValue) {
-        let workArcColor = JSON.parse(evt.data.newValue);
+        workArcColor = JSON.parse(evt.data.newValue);
         workArc.style.fill = workArcColor;
         buttonPlay.style.fill = workArcColor;
     }
     if (evt.data.key === "restArcColor" && evt.data.newValue) {
-        let restArcColor = JSON.parse(evt.data.newValue);
+        restArcColor = JSON.parse(evt.data.newValue);
         restArc.style.fill = restArcColor;
         buttonPause.style.fill = restArcColor;
     }
     if (evt.data.key === "textColor" && evt.data.newValue) {
-        let textColor = JSON.parse(evt.data.newValue);
+        textColor = JSON.parse(evt.data.newValue);
         workOrRest.style.fill = textColor;
         timeLeft.style.fill = textColor;
         buttonReset.style.fill = textColor;
