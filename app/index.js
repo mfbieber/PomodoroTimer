@@ -2,6 +2,7 @@ import document from "document";
 import * as messaging from "messaging";
 import clock from "clock";
 import { vibration } from "haptics";
+import * as fs from "fs";
 
 let background = document.getElementById("background");
 const workOrRest = document.getElementById("workOrRest");
@@ -15,26 +16,84 @@ const buttonForward = document.getElementById("btn-tl");
 const workBackground = document.getElementById("workBackground");
 const restBackground = document.getElementById("restBackground");
 
-let workingTime = 25;
-let restingTime = 5;
 let working = false;
 let resting = false;
 let workCount = 0;
 let restCount = 0;
-let textColor = "#87c5b4";
-let restArcColor = "#dc8331";
-let workArcColor = "#ae2c51";
+let workingTime = 1500;
+let restingTime = 300;
 let backgroundColor = "#42113b";
+let workArcColor = "#ae2c51";
+let restArcColor = "#dc8331";
+let textColor = "#87c5b4";
 
-clock.granularity = "seconds";
-clock.ontick = evt => {start()};
-workOrRest.text = 'press start!';
-let start = () => {setInterval(timer(), 1000);};
+let exists = true;
+try {
+    fs.statSync("json.txt");
+}
+catch(error) {
+    exists = false;
+}
+
+let loadSettings = () => {
+    if (!exists) {
+        let settings = {
+            "backgroundColor": backgroundColor,
+            "sliderWorking": workingTime,
+            "sliderResting": restingTime,
+            "workArcColor": workArcColor,
+            "restArcColor": restArcColor,
+            "textColor": textColor
+        };
+        fs.writeFileSync("json.txt", settings, "json");
+        console.log('initialized settings file');
+    }
+    else {
+        let jsonObject = fs.readFileSync("json.txt", "json");
+        backgroundColor = jsonObject["backgroundColor"];
+        workArcColor = jsonObject["workArcColor"];
+        restArcColor = jsonObject["restArcColor"];
+        workingTime = jsonObject["sliderWorking"];
+        restingTime = jsonObject["sliderResting"];
+        textColor = jsonObject["textColor"];
+        console.log('read from settings file');
+    };
+}
+
+let updateArcs = () => {
+    workBackground.sweepAngle = (workingTime / (workingTime + restingTime)) * 360 - 2;
+    restBackground.sweepAngle = (restingTime / (workingTime + restingTime)) * 360 - 2;
+    workBackground.startAngle = restBackground.sweepAngle + 4;
+    workArc.startAngle = workBackground.startAngle + 1;
+    restArc.sweepAngle = restBackground.sweepAngle -2;
+}
+let updateStyle = () => {
+    background.style.fill = backgroundColor;
+    restArc.style.fill = restArcColor;
+    workArc.style.fill = workArcColor;
+    updateArcs();
+    buttonPlay.style.fill = workArcColor;
+    buttonPause.style.fill = restArcColor;
+    workOrRest.style.fill = textColor;
+    timeLeft.style.fill = textColor;
+    buttonReset.style.fill = textColor;
+    buttonForward.style.fill = textColor;
+}
+
+clock.granularity = "minutes";
+clock.ontick = evt => {
+    workOrRest.text = 'press start!';
+    start();
+    loadSettings();
+};
+let start = () => {
+    setInterval(timer(), 1000);
+};
 let timer = () => {
     if (working) {
         workOrRest.text = 'work!';
         if (workCount > workingTime) {
-            vibration.start("bump");
+            vibration.start("nudge-max");
             resting = true;
             workCount = 0;
             working = false;
@@ -109,14 +168,6 @@ let resetRestSettings = () => {
     restArc.startAngle = 3;
 }
 
-let updateArcs = () => {
-    workBackground.sweepAngle = (workingTime / (workingTime + restingTime)) * 360 - 2;
-    restBackground.sweepAngle = (restingTime / (workingTime + restingTime)) * 360 - 2;
-    workBackground.startAngle = restBackground.sweepAngle + 4;
-    workArc.startAngle = workBackground.startAngle + 1;
-    restArc.sweepAngle = restBackground.sweepAngle -2;
-}
-
 let convertSecondsToMinutesAndSeconds = (time) => {
     let minutes = Math.floor(time/60);
     var seconds = time - minutes*60;
@@ -128,31 +179,31 @@ messaging.peerSocket.onmessage = evt => {
     console.log(`App received: ${JSON.stringify(evt)}`);
     if (evt.data.key === "backgroundColor" && evt.data.newValue) {
         backgroundColor = JSON.parse(evt.data.newValue);
-        background.style.fill = backgroundColor;
     }
     if (evt.data.key === "sliderWorking" && evt.data.newValue) {
         workingTime = JSON.parse(evt.data.newValue) * 60;
-        updateArcs();
     }
     if (evt.data.key === "sliderResting" && evt.data.newValue) {
         restingTime = JSON.parse(evt.data.newValue) * 60;
-        updateArcs();
     }
     if (evt.data.key === "workArcColor" && evt.data.newValue) {
         workArcColor = JSON.parse(evt.data.newValue);
-        workArc.style.fill = workArcColor;
-        buttonPlay.style.fill = workArcColor;
     }
     if (evt.data.key === "restArcColor" && evt.data.newValue) {
         restArcColor = JSON.parse(evt.data.newValue);
-        restArc.style.fill = restArcColor;
-        buttonPause.style.fill = restArcColor;
     }
     if (evt.data.key === "textColor" && evt.data.newValue) {
         textColor = JSON.parse(evt.data.newValue);
-        workOrRest.style.fill = textColor;
-        timeLeft.style.fill = textColor;
-        buttonReset.style.fill = textColor;
-        buttonForward.style.fill = textColor;
     }
+    let settings = {
+        "backgroundColor": backgroundColor,
+        "sliderWorking": workingTime,
+        "sliderResting": restingTime,
+        "workArcColor": workArcColor,
+        "restArcColor": restArcColor,
+        "textColor": textColor
+    };
+    fs.writeFileSync("json.txt", settings, "json");
+    console.log('updated settings file');
+    updateStyle();
 };
